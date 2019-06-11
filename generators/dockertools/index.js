@@ -205,8 +205,8 @@ module.exports = class extends Generator {
 
 	_generateNodeJS() {
 		const applicationName = Utils.sanitizeAlphaNum(this.bluemix.name);
-		const dockerFileRun = this.opts.services.length > 0 ? 'docker-compose.yml' : 'Dockerfile';
-		const dockerFileTools = this.opts.services.length > 0 ? 'docker-compose-tools.yml' : 'Dockerfile-tools';
+		const dockerFileRun = 'docker-compose.yml';
+		const dockerFileTools = 'docker-compose-tools.yml';
 		const port = this.opts.port ? this.opts.port : '3000';
 		const debugPort = '9229';
 
@@ -255,16 +255,13 @@ module.exports = class extends Generator {
 			hostPathTools: '.',
 			containerPathRun: '/app',
 			containerPathTools: '/app',
-			containerPortMap: `${port}:${port}`,
-			containerPortMapDebug: `${debugPort}:${debugPort}`,
-			containerMountsRun: '"./node_modules_linux": "/app/node_modules"',
-			containerMountsTools: '"./node_modules_linux": "/app/node_modules"',
 			dockerFileRun,
 			dockerFileTools,
 			imageNameRun: `${applicationName.toLowerCase()}-express-run`,
 			imageNameTools: `${applicationName.toLowerCase()}-express-tools`,
-			buildCmdRun: 'npm install',
-			testCmd: 'npm run test',
+			useRoot: true,
+			buildCmdRun: 'npm install' ,
+			testCmd: 'npm test',
 			buildCmdDebug: 'npm install',
 			runCmd: '',
 			debugCmd: 'npm run debug',
@@ -285,7 +282,14 @@ module.exports = class extends Generator {
 
 		this._copyTemplateIfNotExists(FILENAME_DEV, 'node/run-dev', {});
 
+		const dockerComposeConfig =  {
+			containerName: `${applicationName.toLowerCase()}-express-run`,
+			image: `${applicationName.toLowerCase()}-express-run`,
+			ports: [port, debugPort],
+			appPort: port
+		};
 
+<<<<<<< Updated upstream
 		if (this.opts.services.length > 0) {
 
 			const derrayify = serviceEnvs[0];
@@ -312,6 +316,19 @@ module.exports = class extends Generator {
 				this.destinationPath('.dockerignore')
 			);
 		}
+=======
+		if(this.opts.services.length > 0) {
+			const derrayify = serviceEnvs[0];
+			dockerComposeConfig.ports = dockerComposeConfig.ports.concat(servicePorts);
+			dockerComposeConfig.envs = derrayify;
+			dockerComposeConfig.images = serviceImageNames;
+		}
+
+		this._writeHandlebarsFile('node/docker-compose.yml', FILENAME_DOCKERCOMPOSE, dockerComposeConfig);
+		dockerComposeConfig.containerName = `${applicationName.toLowerCase()}-express-tools`;
+		dockerComposeConfig.image = `${applicationName.toLowerCase()}-express-tools`;
+		this._writeHandlebarsFile('node/docker-compose-tools.yml', FILENAME_DOCKERCOMPOSE_TOOLS, dockerComposeConfig);
+>>>>>>> Stashed changes
 	}
 
 	_generateJava() {
@@ -326,7 +343,7 @@ module.exports = class extends Generator {
 				// file not found
 				this.opts.artifactId = "<replace-me-with-artifactId-from-pom.xml>";
 			}
-		} 
+		}
 
 		if (!this.opts.appName) {
 			this.opts.appName = Utils.sanitizeAlphaNum(this.bluemix.name);
@@ -748,6 +765,4 @@ module.exports = class extends Generator {
 		}
 
 	}
-
-
 };
